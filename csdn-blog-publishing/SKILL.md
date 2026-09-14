@@ -30,4 +30,4 @@ description: Draft, review, and publish CSDN technical blog posts while protecti
 
 ## 与私人 Wiki 的记录
 
-当用户要求归档或已有约定需要维护 Wiki 时，更新最具体的博客规则或过程记录、关联待办及 `wiki/log.md`。写入前核对基线哈希，记录时不要把凭据或内部环境信息带入 Wiki 以外的公开内容。
+当用户要求归档或已有约定需要维护 Wiki 时，更新最具体的博客规则或过程记录、关联待办及维护日志。写入前核对基线哈希，记录时不要把凭据或内部环境信息带入 Wiki 以外的公开内容。
