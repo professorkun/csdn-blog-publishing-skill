@@ -1,15 +1,51 @@
 # csdn-blog-publishing-skill
-A Codex skill for drafting and publishing privacy-safe CSDN technical posts.
 
-## Install
+一个把「技术文章从草稿到公开发布」全流程固化下来的 Agent Skill：先写作与脱敏，再执行平台侧动作（CSDN 编辑器 + GitHub 公开仓库镜像），全程留下可核验证据。
 
-Install this repository as a personal Codex skill, then invoke `$csdn-blog-publishing` when you need to draft, review, or publish a CSDN technical post.
+## 安装
 
-The skill keeps public examples separate from private environment details, treats automatic saves as drafts, and requires an explicit confirmation before each article is published.
+把这个仓库作为个人 Skill 安装（放到你的技能目录，或按所用 Agent 的方式加载），之后在需要写文章、发布文章、镜像仓库时调用它。
 
-## What it covers
+技能目录结构：
 
-- Privacy review for prose, code, links, screenshots, and attachments.
-- Evidence-based publication states, separating editor drafts, review submission, dashboard status, and verified public rendering.
-- Optional explanatory visuals whose quantity follows the article's information density and reader benefit, rather than a fixed image limit.
-- A final public-page check for content, code blocks, images, links, visibility, categories, and tags.
+```
+SKILL.md
+scripts/
+  cdp.mjs             # 极简 Chrome DevTools Protocol 客户端
+  md2html.mjs         # Markdown → HTML（默认不发布"关联记录"章节）
+  fill-csdn.mjs       # 写标题与正文并回读校验
+  publish-csdn.mjs    # 点发布并轮询成功页、提取文章 ID
+  tag.mjs             # 标签选择器：输入关键词
+  clicktag.mjs        # 标签选择器：点击候选项
+  cleartag.mjs        # 标签选择器：清空输入
+  mk-readme.mjs       # 由发布正文生成 GitHub README
+  gh-create-repo.mjs  # 用 token 创建公开仓库（幂等）
+```
+
+所有脚本用 Node 22+ 运行（依赖内置 `WebSocket` 与 `fetch`），不含任何真实账号、绝对路径或凭据；使用前替换占位符。
+
+## 覆盖范围
+
+- **写作与脱敏**：什么算敏感信息、如何用关键词扫描复检、示例代码如何用占位符表达。
+- **发布状态与授权**：区分「草稿已自动保存」「已准备提交」「已提交审核」「后台显示已发布」「公开页已验证」五级状态；外部写入前必须取得用户对当前草稿的明确确认。
+- **平台执行**：启动独立配置的浏览器会话 → 写入富文本编辑器 → 点发布并回读 → 镜像到 GitHub → 逐项记录证据。
+- **可选配图**：只有在图片能明显帮助理解时才生成，且不用于承载代码、精确数据或测试结论。
+
+## 记录下来的实际踩坑
+
+这些是流程里最容易重复犯的问题，写进 Skill 是为了下次不用再试一遍：
+
+| 问题 | 现象 | 处理 |
+|---|---|---|
+| 正文编码 | 中文变成 `&aring;&copy;…` 实体，长度异常膨胀 | base64 解码后再按 UTF-8 还原 |
+| 编辑器入口失效 | 工具栏的 Markdown 切换按钮点不动、也取不到命令 | 绕开 UI，直接调用编辑器的数据写入接口 |
+| 标题赋值不生效 | 直接改 `value` 界面不认 | 用原生 setter + 派发 `input`/`change` |
+| 标签输入 | 回车无反应；候选列表不过滤 | 从下拉候选项点击目标项 |
+| 推送误判 | `git push` 输出走 stderr，壳层报成失败 | 以平台侧回读为准，不看壳层退出码 |
+| 标题层级 | 平台会把 `##` 归一为页面内更低层级 | 核对章节数量与内容，而不是级别 |
+
+## 使用边界
+
+- Skill 只描述流程与命令模板；凭据、账号、私有路径一律不进 Skill。
+- 外部写入（发布、推送、同步）每次都需要用户对**当前内容**的明确确认；历史授权不延续到新文章。
+- 「文件已就位」「已安装」「已加载」「实际使用过」是四个不同层级，报告时分别说明。
